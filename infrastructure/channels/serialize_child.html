@@ -5,14 +5,18 @@
 
 let lastData;
 
-// Hack: these will be recreated as assert failures in the caller
+// Hack: these will be converted into testharness AssertionError instances in the test
+// This means they will be treated identically to asserts raised by `assert_` in the harness
+// In the long term we want to be able to use parts of testharness.js directly in remote
+// contexts and automatically send the results over a channel.
 function AssertionError(message) {
     this.message = message;
 }
 AssertionError.prototype = Object.create(Error.prototype);
 
 function compareResult(name, actual) {
-    let obj = objects[name]
+    let obj = objects[name];
+    // If there's an output property use that, otherwise assume the output is equal to the input
     let expected = obj.hasOwnProperty("output") ? obj.output : obj.input;
     seen = new Set();
     try {
@@ -97,8 +101,11 @@ function compareValue(actualValue, expectedValue, seen) {
         if (actualValue.size !== expectedValue.size) {
             throw new Error(`Set sizes differ, expected ${expectedValue.size}, got ${actualValue.size}`);
         }
-        // So for a set we can't really check if the values are the same
-        // except where they're primitives
+        // For an arbitary set it's complex to check if two sets are equivalent, since
+        // we'd need to compare every object in one set with every object in the
+        // other set, so we end up with quadratic complexity. Instead, just support sets
+        // containing primitives and rely on the other tests for correct handling of
+        // objects.
         for (let entry of expectedValue) {
             if (["undefined", "string", "boolean", "number", "bigint"].includes(typeof entry) || entry === null) {
                 if(!actualValue.has(entry)) {
