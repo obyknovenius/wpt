@@ -56,6 +56,8 @@ def filter_triggers(event, all_tasks):
                     if (trigger_branch == branch or
                         trigger_branch.endswith("*") and branch.startswith(trigger_branch[:-1])):
                         triggered[name] = task
+    logger.info("event")
+    logger.info(event)
     logger.info("Triggers match tasks:\n * %s" % "\n * ".join(triggered.keys()))
     return triggered
 
